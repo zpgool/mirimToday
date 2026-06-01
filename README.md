@@ -1,17 +1,55 @@
-# dbp_project
+# 🏫 미림 오늘 (Mirim Today)
 
-A new Flutter project.
+> 매일 아침 등교길, 오늘 하루 일과를 가장 빠르고 편리하게 확인해 보세요!
 
-## Getting Started
+미림마이스터고등학교 학생들의 편리한 학교 생활을 돕기 위해 만든 **하루 일과 도우미 애플리케이션**입니다.
 
-This project is a starting point for a Flutter application.
+귀찮게 매번 시간표와 급식표를 따로 찾아볼 필요 없이, 앱 하나로 오늘 하루를 스마트하게 준비할 수 있습니다.
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## ✨ 핵심 소개 (Key Concept)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 📅 한눈에 보는 오늘의 정보
+
+앱을 켜는 순간, 한국어 맞춤형 날짜 표시 시스템이 작동하여 오늘이 몇 월 며칠이고 무슨 요일인지 따뜻하고 깔끔하게 보여줍니다.
+
+---
+
+### 🕒 똑똑한 학년/반 맞춤형 시간표
+
+#### 간편한 필터링
+내가 속한 학년(1~3학년)과 학급(1~6반)을 선택하면 실시간으로 오늘 시간표를 쏙쏙 골라 보여줍니다.
+
+#### 자유로운 날짜 이동
+어제 배운 내용이나 내일 준비해야 할 과목이 궁금하다면 양옆의 날짜를 탭하여 자유롭게 날짜를 넘나들 수 있습니다.
+
+#### 빠른 오늘 복귀
+다른 날짜를 구경하다가도 초록색 강조로 구성된 **'오늘' 버튼**을 누르면 언제든지 곧바로 오늘의 시간표로 돌아옵니다.
+
+---
+
+### 🍚 터치 한 번으로 열리는 오늘의 급식
+
+#### 부드러운 화면 전환
+시간표 바로 옆에 있는 **'급식표' 탭**을 누르면 화면 전환 없이 부드러운 슬라이딩 애니메이션과 함께 오늘의 급식 정보를 확인할 수 있습니다.
+
+---
+
+### 🌓 시력 보호를 위한 다크 모드 (Dark Mode)
+
+어두운 곳에서 내일 시간표를 볼 때도 학생들의 시력을 보호할 수 있도록 세련되고 눈이 편안한 다크 모드 테마를 완벽하게 지원합니다.
+
+우측 상단의 스위치로 간편하게 켜고 끌 수 있습니다.
+
+---
+
+## 🚀 주요 기능 요약
+
+- 📅 오늘 날짜 및 요일 자동 표시
+- 🕒 학년·반별 맞춤 시간표 제공
+- 📆 날짜 이동 기능 (이전/다음 날짜 조회)
+- ✅ 오늘 날짜로 즉시 이동
+- 🍚 오늘의 급식 정보 제공
+- 🎞️ 부드러운 탭 전환 애니메이션
+- 🌓 다크 모드 지원
