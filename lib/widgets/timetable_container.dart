@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/timetable_data.dart';
 
-class TimetableContainer extends StatelessWidget {
+class TimetableContainer extends StatefulWidget {
   final bool isDarkMode;
   final DateTime selectedDate;
   final String selectedGrade;
@@ -29,7 +29,32 @@ class TimetableContainer extends StatelessWidget {
     required this.onClassChanged,
   });
 
-  // UI에 보여줄 "MM/DD (요일)" 형태 변환
+  @override
+  State<TimetableContainer> createState() => _TimetableContainerState();
+}
+
+class _TimetableContainerState extends State<TimetableContainer> {
+  final PageController _pageController = PageController(initialPage: 1);
+  bool _isSwiping = false;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TimetableContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate != widget.selectedDate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(1);
+        }
+      });
+    }
+  }
+
   String _formatDateToUI(DateTime date) {
     final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     String month = date.month.toString();
@@ -38,7 +63,6 @@ class TimetableContainer extends StatelessWidget {
     return "$month/$day ($weekday)";
   }
 
-  // 교시별 고정 시간 변환
   String _getTimeString(int period) {
     switch (period) {
       case 1:
@@ -60,78 +84,111 @@ class TimetableContainer extends StatelessWidget {
     }
   }
 
+  Widget _buildDateRow(DateTime centerDate) {
+    DateTime leftDate = centerDate.subtract(const Duration(days: 1));
+    DateTime rightDate = centerDate.add(const Duration(days: 1));
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Text(
+          _formatDateToUI(leftDate),
+          style: TextStyle(
+            color: widget.isDarkMode ? Colors.grey[600] : Colors.black38,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          _formatDateToUI(centerDate),
+          style: TextStyle(
+            color: widget.isDarkMode ? Colors.white : Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          _formatDateToUI(rightDate),
+          style: TextStyle(
+            color: widget.isDarkMode ? Colors.grey[600] : Colors.black38,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    DateTime yesterday = selectedDate.subtract(const Duration(days: 1));
-    DateTime tomorrow = selectedDate.add(const Duration(days: 1));
-
     DateTime now = DateTime.now();
     bool isShowingToday =
-        selectedDate.year == now.year &&
-        selectedDate.month == now.month &&
-        selectedDate.day == now.day;
+        widget.selectedDate.year == now.year &&
+        widget.selectedDate.month == now.month &&
+        widget.selectedDate.day == now.day;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[850] : const Color(0xffE6E6E6),
+        color: widget.isDarkMode ? Colors.grey[850] : const Color(0xffE6E6E6),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
-          // 1. 날짜 이동 영역
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              GestureDetector(
-                onTap: onPrevDay,
-                child: Text(
-                  _formatDateToUI(yesterday),
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.grey : Colors.black54,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+          Listener(
+            onPointerDown: (_) => setState(() => _isSwiping = true),
+            onPointerUp: (_) => setState(() => _isSwiping = false),
+            onPointerCancel: (_) => setState(() => _isSwiping = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 50,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _isSwiping
+                    ? (widget.isDarkMode ? Colors.grey[800] : Colors.white)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: _isSwiping && !widget.isDarkMode
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
-              Text(
-                _formatDateToUI(selectedDate),
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: PageView(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (page) {
+                  if (page == 0) {
+                    widget.onPrevDay();
+                  } else if (page == 2) {
+                    widget.onNextDay();
+                  }
+                },
+                children: [
+                  _buildDateRow(widget.selectedDate.subtract(const Duration(days: 1))),
+                  _buildDateRow(widget.selectedDate),
+                  _buildDateRow(widget.selectedDate.add(const Duration(days: 1))),
+                ],
               ),
-              GestureDetector(
-                onTap: onNextDay,
-                child: Text(
-                  _formatDateToUI(tomorrow),
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.grey : Colors.black54,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 30),
 
-          // 2. 오늘 바로가기 및 드롭다운 필터 영역
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: isShowingToday ? null : onToday,
+                onTap: isShowingToday ? null : widget.onToday,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: isShowingToday
-                        ? (isDarkMode ? Colors.grey[800] : Colors.grey[300])
+                        ? (widget.isDarkMode ? Colors.grey[800] : Colors.grey[300])
                         : const Color(0xff00845B),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: isShowingToday
@@ -150,7 +207,7 @@ class TimetableContainer extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: isShowingToday
-                          ? (isDarkMode ? Colors.grey[500] : Colors.grey[600])
+                          ? (widget.isDarkMode ? Colors.grey[500] : Colors.grey[600])
                           : Colors.white,
                     ),
                   ),
@@ -159,17 +216,17 @@ class TimetableContainer extends StatelessWidget {
               Row(
                 children: [
                   _buildDropdownButton(
-                    selectedGrade,
+                    widget.selectedGrade,
                     ['1학년', '2학년', '3학년'],
-                    isDarkMode,
-                    onGradeChanged,
+                    widget.isDarkMode,
+                    widget.onGradeChanged,
                   ),
                   const SizedBox(width: 16),
                   _buildDropdownButton(
-                    selectedClass,
+                    widget.selectedClass,
                     ['1반', '2반', '3반', '4반', '5반', '6반'],
-                    isDarkMode,
-                    onClassChanged,
+                    widget.isDarkMode,
+                    widget.onClassChanged,
                   ),
                 ],
               ),
@@ -177,13 +234,12 @@ class TimetableContainer extends StatelessWidget {
           ),
           const SizedBox(height: 15),
 
-          // 3. 시간표 리스트 내용 표시
-          isLoading
+          widget.isLoading
               ? const Padding(
                   padding: EdgeInsets.all(40.0),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : timetableList.isEmpty
+              : widget.timetableList.isEmpty
               ? const Padding(
                   padding: EdgeInsets.all(40.0),
                   child: Center(
@@ -196,12 +252,12 @@ class TimetableContainer extends StatelessWidget {
               : ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: timetableList.length,
+                  itemCount: widget.timetableList.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 10),
                   itemBuilder: (context, index) {
-                    final item = timetableList[index];
-                    return _buildTimetableRow(item, isDarkMode);
+                    final item = widget.timetableList[index];
+                    return _buildTimetableRow(item, widget.isDarkMode);
                   },
                 ),
         ],
@@ -209,7 +265,6 @@ class TimetableContainer extends StatelessWidget {
     );
   }
 
-  // 드롭다운 공통 버튼 컴포넌트
   Widget _buildDropdownButton(
     String value,
     List items,
@@ -265,7 +320,6 @@ class TimetableContainer extends StatelessWidget {
     );
   }
 
-  // 단일 교시 카드 컴포넌트
   Widget _buildTimetableRow(TimetableData item, bool isDarkMode) {
     final bgColor = isDarkMode ? const Color(0xff505050) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black;
@@ -296,8 +350,8 @@ class TimetableContainer extends StatelessWidget {
               child: Text(
                 _getTimeString(item.period),
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: textColor,
                 ),
               ),
@@ -317,8 +371,8 @@ class TimetableContainer extends StatelessWidget {
                   Text(
                     '${item.period}',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       color: textColor,
                     ),
                   ),
@@ -329,7 +383,7 @@ class TimetableContainer extends StatelessWidget {
                           ? '${item.subject}(${item.teacher})'
                           : item.subject,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
