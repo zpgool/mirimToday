@@ -11,7 +11,6 @@ class CurrentDateWidget extends StatefulWidget {
 
 class _CurrentDateWidgetState extends State<CurrentDateWidget> {
   late Timer _timer;
-  // 🚨 선언과 동시에 즉시 초기값을 넣어주어 타이밍 에러(late 관련)를 원천 차단합니다.
   String _formattedDate = DateFormat('yyyy년 MM월 dd일 EEEE', 'ko_KR').format(DateTime.now());
 
   @override
