@@ -74,11 +74,11 @@ class _TimetableContainerState extends State<TimetableContainer> {
       case 4:
         return '11:20 ~ 12:10';
       case 5:
-        return '1:10 ~ 2:00';
+        return '1:00 ~ 1:50';
       case 6:
-        return '2:10 ~ 3:00';
+        return '2:00 ~ 2:50';
       case 7:
-        return '3:10 ~ 4:00';
+        return '3:00 ~ 3:50';
       default:
         return '';
     }
