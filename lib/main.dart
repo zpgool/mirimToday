@@ -31,9 +31,15 @@ class MyApp extends StatelessWidget {
           title: '미림 오늘',
           debugShowCheckedModeBanner: false,
           themeMode: themeProvider.themeMode, // 현재 테마 모드 적용
-          theme: ThemeData.light(), // 라이트 테마 정의
-          darkTheme: ThemeData.dark(), // 다크 테마 정의
-          // 🚨 라우터 설정 적용
+          theme: ThemeData(
+            brightness: Brightness.light,
+            fontFamily: 'Pretendard',
+          ),
+
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            fontFamily: 'Pretendard',
+          ), // 🚨 라우터 설정 적용
           initialRoute: AppRoutes.splash, // 앱이 켜지면 처음 보여줄 주소 (/)
           onGenerateRoute: AppRoutes.generateRoute, // 라우터 매핑 함수 연결
         );
