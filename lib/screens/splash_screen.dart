@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
               const Text('하루를 편리하게', style: TextStyle(fontSize: 14)),
               const SizedBox(height: 230),
         
-              Image.asset('lib/assets/img/mirim_logo.png', width: 110),
+              Image.asset('assets/img/mirim_logo.png', width: 110),
         
               const SizedBox(height: 20),
         
