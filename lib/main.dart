@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             fontFamily: 'Pretendard',
-          ), // 🚨 라우터 설정 적용
+          ), // 라우터 설정 적용
           initialRoute: AppRoutes.splash, // 앱이 켜지면 처음 보여줄 주소 (/)
           onGenerateRoute: AppRoutes.generateRoute, // 라우터 매핑 함수 연결
         );
