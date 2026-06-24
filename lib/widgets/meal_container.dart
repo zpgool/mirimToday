@@ -8,6 +8,7 @@ class MealContainer extends StatefulWidget {
   final VoidCallback onPrevDay;
   final VoidCallback onNextDay;
   final VoidCallback onToday;
+  final void Function(String mealType)? onEdit;
 
   const MealContainer({
     super.key,
@@ -18,6 +19,7 @@ class MealContainer extends StatefulWidget {
     required this.onPrevDay,
     required this.onNextDay,
     required this.onToday,
+    this.onEdit,
   });
 
   @override
@@ -161,11 +163,14 @@ class _MealContainerState extends State<MealContainer> {
 
   Widget _buildMealCard(String type, String menu, bool isDarkMode) {
     final bgColor = isDarkMode ? const Color(0xff505050) : Colors.white;
+    final itemBgColor = isDarkMode ? const Color(0xff3a3a3a) : const Color(0xffF3F3F3);
     final textColor = isDarkMode ? Colors.white : Colors.black;
+    final cleanMenu = menu.replaceAll(RegExp(r'\([A-Za-z\d가-힣.]+\)'), '').trim();
+    final items = cleanMenu.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 8, 20),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
@@ -185,16 +190,37 @@ class _MealContainerState extends State<MealContainer> {
             ),
           ),
           Expanded(
-            child: Text(
-              menu,
-              style: TextStyle(
-                height: 1.5,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: itemBgColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+              )).toList(),
             ),
           ),
+          if (widget.onEdit != null)
+            IconButton(
+              onPressed: () => widget.onEdit!(type),
+              icon: Icon(Icons.edit_outlined, size: 20, color: Colors.grey[500]),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 20,
+            ),
         ],
       ),
     );

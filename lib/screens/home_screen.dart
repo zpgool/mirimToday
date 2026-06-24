@@ -30,10 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // 급식 데이터를 담아둘 변수 (기본값 설정)
   Map<String, String> _mealData = {
-    '조식': '등록된 조식 정보가 없습니다.', 
-    '중식': '등록된 중식 정보가 없습니다.', 
+    '조식': '등록된 조식 정보가 없습니다.',
+    '중식': '등록된 중식 정보가 없습니다.',
     '석식': '등록된 석식 정보가 없습니다.'
   };
+  Map<String, String> _allergyData = {'조식': '', '중식': '', '석식': ''};
 
   @override
   void initState() {
@@ -130,21 +131,26 @@ class _HomeScreenState extends State<HomeScreen> {
         };
 
         // JSON 구조: {"success": true, "data": [{...}, {...}]}
+        Map<String, String> tempAllergy = {'조식': '', '중식': '', '석식': ''};
+
         if (decodedData is Map && decodedData['data'] is List) {
           final List<dynamic> mealList = decodedData['data'];
-          
+
           for (var item in mealList) {
-            String type = item['meal_type'] ?? ''; 
+            String type = item['meal_type'] ?? '';
             String menu = item['menu'] ?? '';
-            
+            String allergy = item['allergy_info'] ?? '';
+
             if (tempMeal.containsKey(type)) {
               tempMeal[type] = menu;
+              tempAllergy[type] = allergy;
             }
           }
         }
 
         setState(() {
           _mealData = tempMeal;
+          _allergyData = tempAllergy;
           _isLoading = false;
         });
       } else {
@@ -161,6 +167,171 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  Future<void> updateMeal(String mealType, String menu) async {
+    final dateParam = _formatDateToParam(_selectedDate);
+    final url = Uri.parse('https://mirimtoday.onrender.com/api/meals');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'date': dateParam,
+          'meal_type': mealType,
+          'menu': menu,
+          'allergy_info': _allergyData[mealType] ?? '',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _mealData[mealType] = menu;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('급식 정보가 수정되었습니다.')),
+          );
+        }
+      } else if (response.statusCode == 404) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('해당 날짜의 급식 정보가 없습니다. 먼저 급식 탭을 열어 데이터를 불러와 주세요.')),
+          );
+        }
+      } else {
+        throw Exception('서버 에러 (코드: ${response.statusCode})');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('수정에 실패했습니다: $e')),
+        );
+      }
+    }
+  }
+
+  void _showEditMealBottomSheet(String mealType) {
+    final cleanedMenu = (_mealData[mealType] ?? '').replaceAll(RegExp(r'\([A-Za-z\d가-힣.]+\)'), '').trim();
+    final items = cleanedMenu.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final controllers = items.map((item) => TextEditingController(text: item)).toList();
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[900] : Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '$mealType 수정',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(ctx).size.height * 0.45,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: controllers.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: entry.value,
+                                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xff00845B)),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                setSheetState(() => isSaving = true);
+                                final newMenu = controllers
+                                    .map((c) => c.text.trim())
+                                    .where((t) => t.isNotEmpty)
+                                    .join('\n');
+                                Navigator.pop(ctx);
+                                await updateMeal(mealType, newMenu);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff00845B),
+                          disabledBackgroundColor: Colors.grey,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: isSaving
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                                '저장',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -181,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
           CupertinoSwitch(
             value: isDark,
             onChanged: (value) => themeProvider.toggleTheme(value),
-            activeColor: const Color(0xff00845B),
+            activeTrackColor: const Color(0xff00845B),
           ),
           const SizedBox(width: 10),
         ],
@@ -251,6 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() => _selectedDate = DateTime.now());
                         fetchMeal();
                       },
+                      onEdit: _showEditMealBottomSheet,
                     ),
               const SizedBox(height: 20),
             ],
